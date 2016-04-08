@@ -60,7 +60,11 @@ if !exists("g:ag_working_path_mode")
     let g:ag_working_path_mode = 'c'
 endif
 
-function! ag#AgBuffer(cmd, args)
+if !exists("g:ag_default_window_type")
+    let g:ag_default_window_type = 'c'
+endif
+
+function! ag#AgBuffer(cmd, args, ...)
   let l:bufs = filter(range(1, bufnr('$')), 'buflisted(v:val)')
   let l:files = []
   for buf in l:bufs
@@ -69,10 +73,10 @@ function! ag#AgBuffer(cmd, args)
       call add(l:files, l:file)
     endif
   endfor
-  call ag#Ag(a:cmd, a:args . ' ' . join(l:files, ' '))
+  call ag#Ag(a:cmd, a:args . ' ' . join(l:files, ' '), a:000)
 endfunction
 
-function! ag#Ag(cmd, args)
+function! ag#Ag(cmd, args, ...)
   let l:ag_executable = get(split(g:ag_prg, " "), 0)
 
   " Ensure that `ag` is installed
@@ -85,7 +89,7 @@ function! ag#Ag(cmd, args)
   if empty(a:args)
     let l:grepargs = expand("<cword>")
   else
-    let l:grepargs = a:args . join(a:000, ' ')
+    let l:grepargs = a:args
   end
 
   if empty(l:grepargs)
@@ -95,12 +99,33 @@ function! ag#Ag(cmd, args)
 
   " Format, used to manage column jump
   if a:cmd =~# '-g$'
-    let s:ag_format_backup=g:ag_format
+    if exists("g:ag_format")
+      let s:ag_format_backup=g:ag_format
+    endif
     let g:ag_format="%f"
   elseif exists("s:ag_format_backup")
     let g:ag_format=s:ag_format_backup
   elseif !exists("g:ag_format")
     let g:ag_format="%f:%l:%c:%m"
+  endif
+
+  if a:0 == 1
+    " Because a:000 is passed in from wrapper functions, check for that case
+    if type(a:1) == type([]) && len(a:1) > 0
+      let l:matches_window_prefix = a:1[0]
+    elseif type(a:1) == type('')
+      let l:matches_window_prefix = a:1
+    else
+      let l:matches_window_prefix = g:ag_default_window_type
+    end
+  else
+    let l:matches_window_prefix = g:ag_default_window_type
+  endif
+
+  if l:matches_window_prefix == 'l'
+    let l:cmd = 'l' . a:cmd
+  else
+    let l:cmd = a:cmd
   endif
 
   let l:grepprg_bak=&grepprg
@@ -120,11 +145,11 @@ function! ag#Ag(cmd, args)
       catch
         echom 'Failed to change directory to:'.l:cwd
       finally
-        silent! execute a:cmd . " " . escape(l:grepargs, '|')
+        silent! execute l:cmd . " " . escape(l:grepargs, '|')
         exe "lcd ".l:cwd_back
       endtry
     else " Someone chose an undefined value or 'c' so we revert to the default
-      silent! execute a:cmd . " " . escape(l:grepargs, '|')
+      silent! execute l:cmd . " " . escape(l:grepargs, '|')
     endif
   finally
     let &grepprg=l:grepprg_bak
@@ -133,20 +158,18 @@ function! ag#Ag(cmd, args)
     let &t_te=l:t_te_bak
   endtry
 
-  if a:cmd =~# '^l'
+  if l:matches_window_prefix == 'l'
     let l:match_count = len(getloclist(winnr()))
   else
     let l:match_count = len(getqflist())
   endif
 
-  if a:cmd =~# '^l' && l:match_count
+  if l:matches_window_prefix == 'l' && l:match_count
     exe g:ag_lhandler
     let l:apply_mappings = g:ag_apply_lmappings
-    let l:matches_window_prefix = 'l' " we're using the location list
   elseif l:match_count
     exe g:ag_qhandler
     let l:apply_mappings = g:ag_apply_qmappings
-    let l:matches_window_prefix = 'c' " we're using the quickfix window
   endif
 
   " If highlighting is on, highlight the search keyword.
@@ -192,11 +215,11 @@ function! ag#Ag(cmd, args)
   endif
 endfunction
 
-function! ag#AgFromSearch(cmd, args)
+function! ag#AgFromSearch(cmd, args, ...)
   let search =  getreg('/')
   " translate vim regular expression to perl regular expression.
   let search = substitute(search,'\(\\<\|\\>\)','\\b','g')
-  call ag#Ag(a:cmd, '"' .  search .'" '. a:args)
+  call ag#Ag(a:cmd, '"' .  search .'" '. a:args, a:000)
 endfunction
 
 function! ag#GetDocLocations()
@@ -210,9 +233,9 @@ function! ag#GetDocLocations()
   return dp
 endfunction
 
-function! ag#AgHelp(cmd,args)
+function! ag#AgHelp(cmd,args,...)
   let args = a:args.' '.ag#GetDocLocations()
-  call ag#Ag(a:cmd,args)
+  call ag#Ag(a:cmd,args,a:000)
 endfunction
 
 function! s:guessProjectRoot()

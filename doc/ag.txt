@@ -11,13 +11,23 @@ the results in a split window.
 
     Search recursively in {directory} (which defaults to the current
     directory) for the {pattern}. Behaves just like the |:grep| command, but
-    will open the |Quickfix| window for you. If [!] is not given the first
-    error is jumped to.
+    will open the result window for you. If [!] is not given the first
+    error is jumped to. By default, the results are displayed in the
+    |quickfix| list. This can be customized with the |g:ag_default_window_type|
+    option.
+
+:LAg [options] {pattern} [{directory}]                                   *:LAg*
+
+    Just like |:Ag| but matches are always placed in the |location-list|.
+
+:QAg [options] {pattern} [{directory}]                                   *:QAg*
+
+    Just like |:Ag| but matches are always placed in the |quickfix| list.
 
 :AgBuffer[!] [options] {pattern}                                    *:AgBuffer*
 
     Search for {pattern} in all open buffers. Behaves just like the |:grep|
-    command, but will open the |Quickfix| window for you. If [!] is not given
+    command, but will open the result window for you. If [!] is not given
     the first error is jumped to.
 
     Note: this will not find changes in modified buffers, since ag can only
@@ -25,29 +35,40 @@ the results in a split window.
     with the 'autowrite' option. A buffer will be ignored if it is a directory
     (an explorer, like netrw).
 
+:LAgBuffer[!] [options] {pattern}                                   *:LAgBuffer*
+
+    Just like |:AgBuffer| but matches are always placed in the |location-list|.
+
+:QAgBuffer[!] [options] {pattern}                                   *:QAgBuffer*
+
+    Just like |:AgBuffer| but matches are always placed in the |quickfix| list.
+
 :AgAdd [options] {pattern} [{directory}]                               *:AgAdd*
 
     Just like |:Ag|, but instead of making a new list, the matches are
-    appended to the current |quickfix| list.
+    appended to the current result list.
+
+:LAgAdd [options] {pattern} [{directory}]                              *:LAgAdd*
+
+    Just like |:AgAdd| but matches are always placed in the |location-list|.
+
+:QAgAdd [options] {pattern} [{directory}]                              *:QAgAdd*
+
+    Just like |:AgAdd| but matches are always placed in the |quickfix| list.
 
 :AgFromSearch [{directory}]                                     *:AgFromSearch*
 
     Just like |:Ag| but the pattern is from previous search.
 
-:LAg [options] {pattern} [{directory}]                                   *:LAg*
+:LAgFromSearch [{directory}]                                    *:LAgFromSearch*
 
-    Just like |:Ag| but instead of the |quickfix| list, matches are placed in
-    the current |location-list|.
+    Just like |:AgFromSearch| but matches are always placed in the
+    |location-list|.
 
-:LAgBuffer [options] {pattern}                                     *:LAgBuffer*
+:QAgFromSearch [{directory}]                                    *:QAgFromSearch*
 
-    Just like |:AgBuffer| but instead of the |quickfix| list, matches are
-    placed in the current |location-list|.
-
-:LAgAdd [options] {pattern} [{directory}]                             *:LAgAdd*
-
-    Just like |:AgAdd| but instead of the |quickfix| list, matches are added
-    to the current |location-list|
+    Just like |:AgFromSearch| but matches are always placed in the |quickfix|
+    list.
 
 :AgFile [options] {pattern} [{directory}]                             *:AgFile*
 
@@ -55,15 +76,26 @@ the results in a split window.
     directory) for filenames matching the {pattern}. Behaves just like the
     |:grep| command, but will open the |Quickfix| window for you.
 
+:LAgFile [options] {pattern} [{directory}]                            *:LAgFile*
+
+    Just like |:AgFile| but matches are always placed in the |location-list|.
+
+:QAgFile [options] {pattern} [{directory}]                            *:QAgFile*
+
+    Just like |:AgFile| but matches are always placed in the |quickfix| list.
+
 :AgHelp[!] [options] {pattern}                                        *:AgHelp*
 
     Search vim documentation files for the {pattern}. Behaves just like the
     |:Ag| command, but searches only vim documentation .txt files
 
-:LAgHelp [options] {pattern}                                         *:LAgHelp*
+:LAgHelp[!] [options] {pattern}                                       *:LAgHelp*
 
-    Just like |:AgHelp| but instead of the |quickfix| list, matches are placed
-    in the current |location-list|.
+    Just like |:AgHelp| but matches are always placed in the |location-list|.
+
+:QAgHelp[!] [options] {pattern}                                       *:QAgHelp*
+
+    Just like |:AgHelp| but matches are always placed in the |quickfix| list.
 
 Files containing the search term will be listed in the split window, along
 with the line number of the occurrence, once for each occurrence. <Enter> on a
@@ -145,6 +177,13 @@ the mappings are not applied (see |g:ag_apply_qmappings| and
 |g:ag_apply_lmappings| for more info. Default 1. Example: >
   let g:ag_mapping_message=0
 <
+                                                     *g:ag_default_window_type*
+Specifies the window type to open with the results. Options are 'c' for
+the |quickfix| list and "l" for the |location-list|. Both are always
+accessible by using |:QAg| and |:LAg| respectively. Default "c". Example: >
+  let g:ag_default_window_type="l"
+<
+
 
 ==============================================================================
 MAPPINGS                                                         *ag-mappings*
